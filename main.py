@@ -11,11 +11,10 @@ app = FastAPI()
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     return JSONResponse(
-        status_code=exc.status_code,  # 保持正确的 HTTP 状态码！
-        content=Res(
-            code=exc.status_code,
-            message=exc.detail,
-        ).model_dump(),
+        status_code=exc.status_code,
+        content=exc.detail
+        if isinstance(exc.detail, dict)
+        else Res(code=exc.status_code, message=str(exc.detail)).model_dump(),
     )
 
 
