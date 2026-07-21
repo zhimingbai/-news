@@ -69,7 +69,7 @@ mysql -u root -p < sql/database.sql
 ### 5. 启动服务
 
 ```bash
-uvicorn main:app --reload --port 8000
+fastapi dev 
 ```
 
 访问 API 文档：
