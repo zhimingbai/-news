@@ -51,7 +51,7 @@ source .venv/bin/activate
 ### 2. 安装依赖
 
 ```bash
-pip install fastapi uvicorn sqlalchemy aiomysql pydantic
+pip install -r requirements.txt
 ```
 
 ### 3. 初始化数据库
