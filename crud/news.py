@@ -1,10 +1,10 @@
 # 新闻相关数据库操作
 
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.news import Category
+from models.news import Category, News
 
 
 async def get_categories(
@@ -25,3 +25,46 @@ async def get_categories(
     stmt = select(Category).offset(skip).limit(limit)
     result = await db.execute(stmt)
     return result.scalars().all()
+
+
+async def get_news_list(
+    db: AsyncSession,
+    category_id: int,
+    page: int = 1,
+    page_size: int = 10,
+):
+    """获取新闻列表。
+
+    Args:
+        db: 数据库会话对象。
+        category_id: 新闻分类ID。
+        page: 页码。
+        page_size: 每页数量。
+
+    Returns:
+        list[News]: 新闻对象列表。
+    """
+    skip = (page - 1) * page_size
+    stmt = (
+        select(News)
+        .where(News.category_id == category_id)
+        .offset(skip)
+        .limit(page_size)
+    )
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+
+async def get_news_count(db: AsyncSession, category_id: int):
+    """获取新闻分类下的新闻数量。
+
+    Args:
+        db: 数据库会话对象。
+        category_id: 新闻分类ID。
+
+    Returns:
+        int: 新闻数量。
+    """
+    stmt = select(func.count(News.id)).where(News.category_id == category_id)
+    result = await db.execute(stmt)
+    return result.scalar_one()
