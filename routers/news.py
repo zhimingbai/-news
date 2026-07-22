@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.db_conf import get_db
-from crud.news import get_categories, get_news_list, get_news_count
+from crud.news import get_categories, get_news_detail, get_news_list, get_news_count
 from schemas.common import Res
 
 
@@ -35,3 +35,17 @@ async def get_news_list_api(
     news_list = await get_news_list(db, category_id, page, page_size)
     total = await get_news_count(db, category_id)
     return Res.success(data={"news_list": news_list, "total": total})
+
+
+@router.get(
+    "/detail", response_model=Res, summary="获取新闻详情", description="获取新闻详情"
+)
+async def get_news_detail_api(
+    new_id: int = Query(..., description="新闻ID", alias="id"),
+    db: AsyncSession = Depends(get_db),
+):
+    """获取新闻详情"""
+    new = await get_news_detail(new_id, db)
+    if not new:
+        return Res.error(msg="新闻不存在")
+    return Res.success(data=new)

@@ -19,6 +19,7 @@ ENV/
 .idea/
 *.swp
 *.swo
+.trae/
 *~
 
 # OS

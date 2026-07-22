@@ -68,3 +68,18 @@ async def get_news_count(db: AsyncSession, category_id: int):
     stmt = select(func.count(News.id)).where(News.category_id == category_id)
     result = await db.execute(stmt)
     return result.scalar_one()
+
+
+async def get_news_detail(new_id: int, db: AsyncSession):
+    """获取新闻详情。
+
+    Args:
+        new_id: 新闻ID。
+        db: 数据库会话对象。
+
+    Returns:
+        News: 新闻对象，如果不存在则返回 None。
+    """
+    stmt = select(News).where(News.id == new_id)
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
