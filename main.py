@@ -1,50 +1,30 @@
 # 应用入口文件
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from routers import news
+from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
+
+from config.exception_handlers import register_exception_handlers
+from routers import register_routers
 from schemas.common import Res
 
 app = FastAPI()
 
+# 注册全局异常处理器
+register_exception_handlers(app)
 
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content=exc.detail
-        if isinstance(exc.detail, dict)
-        else Res(code=exc.status_code, message=str(exc.detail)).model_dump(),
-    )
+# CORS 中间件
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(
-        status_code=422,
-        content=Res(
-            code=422,
-            message="请求参数校验失败",
-            data=exc.errors(),
-        ).model_dump(),
-    )
-
-
-@app.exception_handler(StarletteHTTPException)
-async def starlette_http_exception_handler(
-    request: Request, exc: StarletteHTTPException
-):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content=Res(code=exc.status_code, message=str(exc.detail)).model_dump(),
-    )
+# 注册所有子路由
+register_routers(app)
 
 
 @app.get("/", response_model=Res)
 async def root():
     return Res()
-
-
-app.include_router(news.router)
