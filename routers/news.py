@@ -4,9 +4,15 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.db_conf import get_db
-from crud.news import get_categories, get_news_detail, get_news_list, get_news_count
+from crud.news import (
+    get_categories,
+    get_news_count,
+    get_news_detail,
+    get_news_list,
+    get_related_news,
+    increase_view_count,
+)
 from schemas.common import Res
-
 
 router = APIRouter(prefix="/api/news", tags=["news"])
 
@@ -44,8 +50,24 @@ async def get_news_detail_api(
     new_id: int = Query(..., description="新闻ID", alias="id"),
     db: AsyncSession = Depends(get_db),
 ):
-    """获取新闻详情"""
+    """获取新闻详情，并增加浏览量，同时返回相关的新闻列表"""
     new = await get_news_detail(new_id, db)
     if not new:
-        return Res.error(msg="新闻不存在")
-    return Res.success(data=new)
+        return Res.error(message="新闻不存在")
+    result = await increase_view_count(new_id, db)
+    if result is False:
+        return Res.error(message="浏览量增加失败")
+    related_news = await get_related_news(new_id, new.category_id, db)
+    data = {
+        "id": new.id,
+        "title": new.title,
+        "description": new.description,
+        "content": new.content,
+        "image": new.image,
+        "author": new.author,
+        "publishTime": new.publish_time,
+        "categoryId": new.category_id,
+        "views": new.views + 1,
+        "related_news": related_news,
+    }
+    return Res.success(data=data)
