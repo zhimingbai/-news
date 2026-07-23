@@ -21,10 +21,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 注册所有子路由
-register_routers(app)
-
 
 @app.get("/", response_model=Res)
 async def root():
     return Res()
+
+
+# 注册所有子路由
+register_routers(app)
