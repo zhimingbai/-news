@@ -24,7 +24,13 @@ class LoginRequest(BaseModel):
 
 
 class TokenResponse(BaseModel):
-    """登录成功返回的 Token 响应模型"""
+    """登录成功返回的 Token 响应模型（包含用户信息）"""
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+
+class OAuth2TokenResponse(BaseModel):
+    """OAuth2 标准 Token 响应（Swagger Authorize 按钮需要的最外层格式）"""
+    access_token: str
+    token_type: str = "bearer"
