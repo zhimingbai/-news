@@ -23,6 +23,40 @@ async def get_user_by_username(username: str, db: AsyncSession):
     return user
 
 
+async def get_user_by_id(user_id: int, db: AsyncSession):
+    """根据用户ID获取用户信息。
+
+    Args:
+        user_id: 用户ID。
+        db: 数据库会话对象。
+
+    Returns:
+        User: 用户对象，如果不存在则返回 None。
+    """
+    stmt = select(User).where(User.id == user_id)
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
+
+
+async def authenticate_user(username: str, password: str, db: AsyncSession):
+    """验证用户凭据。
+
+    Args:
+        username: 用户名。
+        password: 明文密码。
+        db: 数据库会话对象。
+
+    Returns:
+        User: 验证通过返回用户对象，否则返回 None。
+    """
+    user = await get_user_by_username(username, db)
+    if not user:
+        return None
+    if not security.verify_password(password, user.password):
+        return None
+    return user
+
+
 async def create_user(new_user: UserRequest, db: AsyncSession):
     """创建新用户。
 
