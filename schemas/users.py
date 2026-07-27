@@ -28,3 +28,13 @@ class LoginRequest(BaseModel):
 
     username: str
     password: str
+
+
+class UserUpdateRequest(BaseModel):
+    """用户更新请求数据模型"""
+
+    nickname: str | None = None
+    avatar: str | None = None
+    gender: str | None = None
+    bio: str | None = None
+    phone: str | None = None

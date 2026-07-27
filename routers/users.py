@@ -9,9 +9,10 @@ from crud.users import (
     create_user,
     get_user_by_id,
     get_user_by_username,
+    update_user,
 )
 from schemas.common import Res
-from schemas.users import LoginRequest, UserRequest, UserResponse
+from schemas.users import LoginRequest, UserRequest, UserResponse, UserUpdateRequest
 from utils.auth import create_access_token, get_current_user_id
 
 router = APIRouter(prefix="/api/users", tags=["users"])
@@ -64,11 +65,28 @@ async def login_api(
     summary="获取当前用户信息",
     description="获取当前登录用户的信息（需要登录）",
 )
-async def get_me_api(
+async def get_user_api(
     user_id: int = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)
 ):
     """获取当前登录用户信息"""
     user = await get_user_by_id(user_id, db)
     if not user:
         return Res.error(message="用户不存在")
+    return Res.success(data={"user": UserResponse.model_validate(user)})
+
+
+@router.post(
+    "/update",
+    response_model=Res,
+    summary="更新当前用户信息",
+    description="更新当前登录用户的信息（需要登录）",
+)
+async def update_user_api(
+    user_update: UserUpdateRequest,
+    user_id: int = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    user = await update_user(user_id, user_update, db)
+    if user is None:
+        user = await get_user_by_id(user_id, db)
     return Res.success(data={"user": UserResponse.model_validate(user)})
