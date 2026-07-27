@@ -1,9 +1,10 @@
 # 用户相关数据库操作
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.users import User
-from schemas.users import UserRequest, UserUpdateRequest
+from schemas.users import UserPasswordUpdateRequest, UserRequest, UserUpdateRequest
 from utils import security
 
 
@@ -95,6 +96,19 @@ async def update_user(user_id: int, updated_data: UserUpdateRequest, db: AsyncSe
     for field, value in update_fields.items():
         setattr(user, field, value)
 
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+async def update_user_password(
+    user_id: int, data: UserPasswordUpdateRequest, db: AsyncSession
+):
+
+    user = await db.get(User, user_id)
+    if not user:
+        return None
+    user.password = security.get_hash_password(data.new_password)
     await db.commit()
     await db.refresh(user)
     return user

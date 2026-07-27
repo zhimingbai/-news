@@ -10,9 +10,17 @@ from crud.users import (
     get_user_by_id,
     get_user_by_username,
     update_user,
+    update_user_password,
 )
 from schemas.common import Res
-from schemas.users import LoginRequest, UserRequest, UserResponse, UserUpdateRequest
+from schemas.users import (
+    LoginRequest,
+    UserInfoResponse,
+    UserPasswordUpdateRequest,
+    UserRequest,
+    UserResponse,
+    UserUpdateRequest,
+)
 from utils.auth import create_access_token, get_current_user_id
 
 router = APIRouter(prefix="/api/users", tags=["users"])
@@ -54,7 +62,7 @@ async def login_api(
         data={
             "access_token": access_token,
             "token_type": "bearer",
-            "user": UserResponse.model_validate(user),
+            "user": UserInfoResponse.model_validate(user),
         }
     )
 
@@ -72,7 +80,7 @@ async def get_user_api(
     user = await get_user_by_id(user_id, db)
     if not user:
         return Res.error(message="用户不存在")
-    return Res.success(data={"user": UserResponse.model_validate(user)})
+    return Res.success(data={"user": UserInfoResponse.model_validate(user)})
 
 
 @router.post(
@@ -89,4 +97,21 @@ async def update_user_api(
     user = await update_user(user_id, user_update, db)
     if user is None:
         user = await get_user_by_id(user_id, db)
+    return Res.success(data={"user": UserInfoResponse.model_validate(user)})
+
+
+@router.post(
+    "/update-password",
+    response_model=Res,
+    summary="更新当前用户密码",
+    description="更新当前登录用户的密码（需要登录）",
+)
+async def update_user_password_api(
+    password_update: UserPasswordUpdateRequest,
+    user_id: int = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    user = await update_user_password(user_id, password_update, db)
+    if user is None:
+        return Res.error(message="用户不存在")
     return Res.success(data={"user": UserResponse.model_validate(user)})
