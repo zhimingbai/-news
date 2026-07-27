@@ -4,10 +4,15 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.db_conf import get_db
-from crud.users import authenticate_user, create_user, get_user_by_username
+from crud.users import (
+    authenticate_user,
+    create_user,
+    get_user_by_id,
+    get_user_by_username,
+)
 from schemas.common import Res
 from schemas.users import LoginRequest, UserRequest, UserResponse
-from utils.auth import create_access_token, get_current_user
+from utils.auth import create_access_token, get_current_user_id
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
@@ -60,7 +65,10 @@ async def login_api(
     description="获取当前登录用户的信息（需要登录）",
 )
 async def get_me_api(
-    current_user=Depends(get_current_user),
+    user_id: int = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)
 ):
     """获取当前登录用户信息"""
-    return Res.success(data={"user": UserResponse.model_validate(current_user)})
+    user = await get_user_by_id(user_id, db)
+    if not user:
+        return Res.error(message="用户不存在")
+    return Res.success(data={"user": UserResponse.model_validate(user)})

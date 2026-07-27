@@ -6,11 +6,6 @@ from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from config.db_conf import get_db
-from crud.users import get_user_by_id
-from models.users import User
 
 # ---------- 配置 ----------
 # 生产环境请通过环境变量或配置文件注入，不要硬编码
@@ -40,13 +35,19 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-async def get_current_user(
+async def get_current_user_id(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
-    db: AsyncSession = Depends(get_db),
-) -> User:
-    """从请求头 Authorization: Bearer <token> 中解析当前登录用户
+):
+    """获取当前登录用户的 ID
 
-    作为 FastAPI 依赖项使用，需要认证的路由注入此依赖即可。
+    Args:
+        credentials: HTTPAuthorizationCredentials 对象，包含 token 信息
+
+    Raises:
+        HTTPException: 如果 token 无效或缺失，则抛出 401 异常
+
+    Returns:
+        int: 当前登录用户的 ID
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -65,8 +66,4 @@ async def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    # 从数据库查询用户（确保用户仍存在）
-    user = await get_user_by_id(user_id, db)
-    if user is None:
-        raise credentials_exception
-    return user
+    return user_id
