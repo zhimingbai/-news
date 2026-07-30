@@ -1,7 +1,7 @@
 # JWT 认证工具
 # FastAPI 官方推荐的 OAuth2 + JWT 方案
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -28,7 +28,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
         str: 编码后的 JWT 字符串
     """
     to_encode = data.copy()
-    expire = datetime.now() + (
+    expire = datetime.now(timezone.utc) + (
         expires_delta or timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     )
     to_encode.update({"exp": expire})
