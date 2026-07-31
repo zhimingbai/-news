@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.db_conf import get_db
-from crud.favorite import add_favorite, is_news_favorite
+from crud.favorite import add_favorite, is_news_favorite, remove_favorite
 from schemas.common import Res
 from utils.auth import get_current_user_id
 
@@ -38,11 +38,28 @@ async def add_favorite_api(
     db: AsyncSession = Depends(get_db),
 ):
     """添加收藏记录"""
-    is_favorited = await is_news_favorite(user_id, news_id, db)
-    if is_favorited:
-        return Res.error(message="已收藏过该新闻")
     favorite_record = await add_favorite(user_id, news_id, db)
+    if favorite_record is None:
+        return Res.error(message="已收藏过该新闻")
     return Res.success(
         data={"favoriteId": favorite_record.id},
         message="收藏成功",
     )
+
+
+@router.delete(
+    path="/remove",
+    response_model=Res,
+    summary="取消收藏",
+    description="取消收藏记录",
+)
+async def remove_favorite_api(
+    news_id: int = Query(..., alias="newsId"),
+    user_id: int = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """取消收藏记录"""
+    is_favorited = await remove_favorite(user_id, news_id, db)
+    if not is_favorited:
+        return Res.error(message="未找到收藏记录")
+    return Res.success(message="取消收藏成功")

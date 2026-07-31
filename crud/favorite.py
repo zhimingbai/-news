@@ -33,10 +33,40 @@ async def add_favorite(user_id: int, news_id: int, db: AsyncSession):
         db: 数据库会话对象。
 
     Returns:
-        Favorite: 创建成功的收藏对象（含自增 id 与收藏时间）。
+        Favorite | None: 添加成功返回收藏记录对象，已收藏过返回 None。
     """
+    # 已收藏过则直接返回 None，避免重复插入触发唯一约束
+    query = select(Favorite).where(
+        Favorite.user_id == user_id, Favorite.news_id == news_id
+    )
+    result = await db.execute(query)
+    if result.scalar_one_or_none() is not None:
+        return None
+
     favorite = Favorite(user_id=user_id, news_id=news_id)
     db.add(favorite)
     await db.commit()
     await db.refresh(favorite)
     return favorite
+
+
+async def remove_favorite(user_id: int, news_id: int, db: AsyncSession):
+    """取消收藏记录。
+
+    Args:
+        user_id: 用户ID。
+        news_id: 新闻ID。
+        db: 数据库会话对象。
+    Returns:
+        bool: 取消收藏成功返回 True，未找到收藏记录返回 False。
+    """
+    query = select(Favorite).where(
+        Favorite.user_id == user_id, Favorite.news_id == news_id
+    )
+    result = await db.execute(query)
+    favorite = result.scalar_one_or_none()
+    if not favorite:
+        return False
+    await db.delete(favorite)
+    await db.commit()
+    return True
