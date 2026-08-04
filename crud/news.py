@@ -48,6 +48,7 @@ async def get_news_list(
     stmt = (
         select(News)
         .where(News.category_id == category_id)
+        .order_by(News.created_at.desc(), News.id.desc())
         .offset(skip)
         .limit(page_size)
     )

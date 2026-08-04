@@ -1,5 +1,6 @@
 # 收藏相关数据库操作
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.favorite import Favorite
@@ -36,16 +37,13 @@ async def add_favorite(user_id: int, news_id: int, db: AsyncSession):
         Favorite | None: 添加成功返回收藏记录对象，已收藏过返回 None。
     """
     # 已收藏过则直接返回 None，避免重复插入触发唯一约束
-    query = select(Favorite).where(
-        Favorite.user_id == user_id, Favorite.news_id == news_id
-    )
-    result = await db.execute(query)
-    if result.scalar_one_or_none() is not None:
-        return None
-
     favorite = Favorite(user_id=user_id, news_id=news_id)
     db.add(favorite)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        return None
     await db.refresh(favorite)
     return favorite
 

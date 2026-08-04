@@ -93,6 +93,9 @@ async def update_user(user_id: int, updated_data: UserUpdateRequest, db: AsyncSe
         return None
 
     user = await db.get(User, user_id)
+    if not user:
+        return None
+
     for field, value in update_fields.items():
         setattr(user, field, value)
 
@@ -117,7 +120,7 @@ async def update_user_password(
     user = await db.get(User, user_id)
     if not user:
         return None
-    if not security.verify_password(data.old_password,user.password):
+    if not security.verify_password(data.old_password, user.password):
         return False
     user.password = security.get_hash_password(data.new_password)
     await db.commit()
