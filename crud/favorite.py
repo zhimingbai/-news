@@ -1,5 +1,7 @@
 # 收藏相关数据库操作
-from sqlalchemy import select
+from typing import cast
+
+from sqlalchemy import CursorResult, delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -68,3 +70,22 @@ async def remove_favorite(user_id: int, news_id: int, db: AsyncSession):
     await db.delete(favorite)
     await db.commit()
     return True
+
+
+async def remove_all_favorites(user_id: int, db: AsyncSession):
+    """清空用户的所有收藏记录。
+
+    Args:
+        user_id: 用户ID。
+        db: 数据库会话对象。
+
+    Returns:
+        int: 删除的收藏记录条数。
+    """
+    # execute 类型签名返回 Result，实际运行时是 CursorResult，rowcount 需要 cast 才能访问
+    result = cast(
+        CursorResult,
+        await db.execute(delete(Favorite).where(Favorite.user_id == user_id)),
+    )
+    await db.commit()
+    return result.rowcount

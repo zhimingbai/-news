@@ -3,7 +3,12 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.db_conf import get_db
-from crud.favorite import add_favorite, is_news_favorite, remove_favorite
+from crud.favorite import (
+    add_favorite,
+    is_news_favorite,
+    remove_all_favorites,
+    remove_favorite,
+)
 from schemas.common import Res
 from utils.auth import get_current_user_id
 
@@ -63,3 +68,20 @@ async def remove_favorite_api(
     if not is_favorited:
         return Res.error(message="未找到收藏记录")
     return Res.success(message="取消收藏成功")
+
+
+@router.delete(
+    "",
+    response_model=Res,
+    summary="清空收藏列表",
+    description="清空用户的所有收藏记录（集合级删除）",
+)
+async def remove_all_favorites_api(
+    user_id: int = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """清空用户的所有收藏记录"""
+    rowcount = await remove_all_favorites(user_id, db)
+    return Res.success(
+        message=f"已清空 {rowcount} 条收藏记录", data={"rowcount": rowcount}
+    )
