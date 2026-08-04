@@ -1,12 +1,9 @@
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Index, Integer, String
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 
-
-class Base(DeclarativeBase):
-    pass
+from models.base import Base
 
 
 class User(Base):
@@ -31,23 +28,21 @@ class User(Base):
     password: Mapped[str] = mapped_column(
         String(255), nullable=False, comment="密码（加密存储）"
     )
-    nickname: Mapped[Optional[str]] = mapped_column(
+    nickname: Mapped[str | None] = mapped_column(
         String(50), comment="昵称", default="新用户"
     )
-    avatar: Mapped[Optional[str]] = mapped_column(
+    avatar: Mapped[str | None] = mapped_column(
         String(255),
         comment="头像URL",
         default="https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg",
     )
-    gender: Mapped[Optional[str]] = mapped_column(
+    gender: Mapped[str | None] = mapped_column(
         Enum("male", "female", "unknown"), comment="性别", default="unknown"
     )
-    bio: Mapped[Optional[str]] = mapped_column(
+    bio: Mapped[str | None] = mapped_column(
         String(500), comment="个人简介", default="这个人很懒，什么都没留下"
     )
-    phone: Mapped[Optional[str]] = mapped_column(
-        String(20), unique=True, comment="手机号"
-    )
+    phone: Mapped[str | None] = mapped_column(String(20), unique=True, comment="手机号")
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.now, comment="创建时间"
     )

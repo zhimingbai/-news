@@ -1,9 +1,21 @@
 # 数据库配置文件
+import os
+
+from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+# 数据库连接参数从 .env 环境变量注入，避免密码硬编码
+load_dotenv()
+
+DB_USER = os.getenv("DB_USER", "root")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "123456")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "3306")
+DB_NAME = os.getenv("DB_NAME", "news_app")
 
 # 数据库URL
 ASYNC_DATABASE_URL = (
-    "mysql+aiomysql://root:123456@localhost:3306/news_app?charset=utf8mb4"
+    f"mysql+aiomysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
 )
 
 # 创建异步引擎

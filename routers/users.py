@@ -114,4 +114,6 @@ async def update_user_password_api(
     user = await update_user_password(user_id, password_update, db)
     if user is None:
         return Res.error(message="用户不存在")
+    if user is False:
+        return Res.error(message="旧密码错误")
     return Res.success(data={"user": UserResponse.model_validate(user)})

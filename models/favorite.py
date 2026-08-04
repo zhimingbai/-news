@@ -1,17 +1,19 @@
 # 收藏数据模型
 
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import DateTime, ForeignKey, Index, Integer, UniqueConstraint
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 
+from models.base import Base
 from models.news import News
 from models.users import User
 
 
-class Base(DeclarativeBase):
-    pass
+def utcnow() -> datetime:
+    """返回不带时区信息的 UTC 时间（兼容 MySQL DATETIME 列）。"""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class Favorite(Base):
@@ -32,7 +34,7 @@ class Favorite(Base):
         Integer, ForeignKey(News.id), nullable=False, comment="新闻ID"
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, nullable=False, comment="收藏时间"
+        DateTime, default=utcnow, nullable=False, comment="收藏时间"
     )
 
     def __repr__(self):

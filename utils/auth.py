@@ -1,15 +1,19 @@
 # JWT 认证工具
 # FastAPI 官方推荐的 OAuth2 + JWT 方案
 
+import os
 from datetime import datetime, timedelta, timezone
 
+from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
 # ---------- 配置 ----------
-# 生产环境请通过环境变量或配置文件注入，不要硬编码
-SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
+# 密钥从 .env 环境变量注入，不要硬编码（.env 已被 .gitignore 忽略）
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-insecure-key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 7
 

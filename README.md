@@ -62,9 +62,20 @@ pip install -r requirements.txt
 mysql -u root -p < sql/database.sql
 ```
 
-### 4. 配置数据库连接
+### 4. 配置环境变量
 
-编辑 `config/db_conf.py`，修改数据库连接信息。
+复制 `.env.example` 为 `.env` 并填写配置：
+
+```bash
+cp .env.example .env
+# Windows
+copy .env.example .env
+```
+
+`.env` 已加入 `.gitignore`，不会提交到仓库，其中包含：
+
+- `SECRET_KEY`：JWT 签名密钥，可用 `python -c "import secrets; print(secrets.token_hex(32))"` 生成
+- `DB_USER` / `DB_PASSWORD` / `DB_HOST` / `DB_PORT` / `DB_NAME`：数据库连接信息
 
 ### 5. 启动服务
 

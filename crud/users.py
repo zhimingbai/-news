@@ -104,10 +104,21 @@ async def update_user(user_id: int, updated_data: UserUpdateRequest, db: AsyncSe
 async def update_user_password(
     user_id: int, data: UserPasswordUpdateRequest, db: AsyncSession
 ):
+    """更新用户密码。
 
+    Args:
+        user_id: 用户ID（来自 JWT，无需再校验存在性）。
+        data: 用户密码更新请求对象，包含新密码。
+        db: 数据库会话对象。
+
+    Returns:
+        User: 更新后的用户对象。
+    """
     user = await db.get(User, user_id)
     if not user:
         return None
+    if not security.verify_password(data.old_password,user.password):
+        return False
     user.password = security.get_hash_password(data.new_password)
     await db.commit()
     await db.refresh(user)
