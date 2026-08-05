@@ -1,7 +1,7 @@
 # 收藏数据模型
 
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Index, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
@@ -9,11 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from models.base import Base
 from models.news import News
 from models.users import User
-
-
-def utcnow() -> datetime:
-    """返回不带时区信息的 UTC 时间（兼容 MySQL DATETIME 列）。"""
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+from utils.time import utcnow
 
 
 class Favorite(Base):
