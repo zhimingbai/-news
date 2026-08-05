@@ -1,11 +1,13 @@
 # 收藏相关数据库操作
 from typing import cast
 
-from sqlalchemy import CursorResult, delete, select
+from sqlalchemy import CursorResult, delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.favorite import Favorite
+from models.news import News
+from schemas.favorite import FavoriteReqList
 
 
 async def is_news_favorite(user_id: int, news_id: int, db: AsyncSession):
@@ -89,3 +91,48 @@ async def remove_all_favorites(user_id: int, db: AsyncSession):
     )
     await db.commit()
     return result.rowcount
+
+
+async def get_favorite_list(page_info: FavoriteReqList, user_id: int, db: AsyncSession):
+    """获取用户的收藏列表（含真实新闻信息）。
+
+    收藏表里只有 (user_id, news_id) 记录，这里先分页查出收藏记录，
+    再根据 news_id 批量查询对应的真实新闻，并返回收藏总数。
+
+    Args:
+        page_info: 分页信息。
+        user_id: 用户ID。
+        db: 数据库会话对象。
+
+    Returns:
+        dict: 包含 "total"（收藏总数）和 "items"（当前页新闻列表）的字典。
+    """
+    offset = (page_info.page - 1) * page_info.size
+
+    # 1. 查询该用户的收藏总数
+    total_stmt = select(func.count(Favorite.id)).where(Favorite.user_id == user_id)
+    total = (await db.execute(total_stmt)).scalar_one()
+
+    # 2. 分页查询收藏记录，最新收藏的排在前面
+    fav_stmt = (
+        select(Favorite)
+        .where(Favorite.user_id == user_id)
+        .order_by(Favorite.created_at.desc(), Favorite.id.desc())
+        .offset(offset)
+        .limit(page_info.size)
+    )
+    favorite_list = (await db.execute(fav_stmt)).scalars().all()
+
+    news_ids = [favorite.news_id for favorite in favorite_list]
+    if not news_ids:
+        return {"total": total, "items": []}
+
+    # 3. 批量查询对应的真实新闻
+    news_stmt = select(News).where(News.id.in_(news_ids))
+    news_map = {
+        news.id: news for news in (await db.execute(news_stmt)).scalars().all()
+    }
+
+    # 4. 保持收藏顺序返回（已删除的新闻自动过滤掉）
+    items = [news_map[news_id] for news_id in news_ids if news_id in news_map]
+    return {"total": total, "items": items}
