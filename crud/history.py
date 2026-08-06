@@ -1,5 +1,8 @@
 # 历史记录相关数据库操作
-from sqlalchemy import select
+from typing import cast
+
+from sqlalchemy import delete, select
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -61,3 +64,18 @@ async def remove_history(history_id: int, user_id: int, db: AsyncSession):
     await db.delete(history)
     await db.commit()
     return True
+
+
+async def remove_all_history(user_id: int, db: AsyncSession):
+    """删除用户的所有历史记录
+
+    Args:
+        user_id: 用户ID。
+        db: 数据库会话对象。
+    Returns:
+        int: 删除的历史记录数量。
+    """
+    stmt = delete(History).where(History.user_id == user_id)
+    result = cast(CursorResult, await db.execute(stmt))
+    await db.commit()
+    return result.rowcount
