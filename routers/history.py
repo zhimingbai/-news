@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.db_conf import get_db
-from crud.history import add_history
+from crud.history import add_history, remove_history
 from schemas.common import Res
 from utils.auth import get_current_user_id
 
@@ -25,3 +25,21 @@ async def add_history_api(
     """添加历史记录"""
     history = await add_history(new_id, user_id, db)
     return Res.success(data={"historyId": history.id})
+
+
+@router.delete(
+    "/delete",
+    response_model=Res,
+    summary="删除历史记录",
+    description="删除用户浏览新闻的历史记录",
+)
+async def delete_history_api(
+    history_id: int = Query(..., alias="historyId"),
+    user_id: int = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """删除单个历史记录"""
+    is_delete = await remove_history(history_id, user_id, db)
+    if is_delete is False:
+        return Res.error(message="未找到历史记录")
+    return Res.success(message="删除成功")

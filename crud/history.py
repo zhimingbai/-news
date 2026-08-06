@@ -18,9 +18,7 @@ async def add_history(news_id: int, user_id: int, db: AsyncSession):
     Returns:
         History: 历史记录对象。
     """
-    stmt = select(History).where(
-        History.user_id == user_id, History.news_id == news_id
-    )
+    stmt = select(History).where(History.user_id == user_id, History.news_id == news_id)
     history = (await db.execute(stmt)).scalar_one_or_none()
 
     if history:
@@ -43,3 +41,23 @@ async def add_history(news_id: int, user_id: int, db: AsyncSession):
         await db.commit()
     await db.refresh(history)
     return history
+
+
+async def remove_history(history_id: int, user_id: int, db: AsyncSession):
+    """删除单个历史记录
+
+    Args:
+        history_id: 历史记录ID。
+        user_id: 用户ID。
+        db: 数据库会话对象。
+
+    Returns:
+        bool: 删除成功返回 True，未找到记录返回 False。
+    """
+    stmt = select(History).where(History.id == history_id, History.user_id == user_id)
+    history = (await db.execute(stmt)).scalar_one_or_none()
+    if not history:
+        return False
+    await db.delete(history)
+    await db.commit()
+    return True
