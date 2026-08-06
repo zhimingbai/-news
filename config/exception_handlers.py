@@ -20,12 +20,14 @@ def register_exception_handlers(app: FastAPI):
     async def http_exception_handler(request: Request, exc: HTTPException):
         """处理所有 HTTPException（包括 Res.error 主动抛出的）"""
         # 如果 detail 已是 {code, message, data} 格式，直接返回
-        if isinstance(exc.detail, dict) and "code" in exc.detail and "message" in exc.detail:
+        if (
+            isinstance(exc.detail, dict)
+            and "code" in exc.detail
+            and "message" in exc.detail
+        ):
             content = exc.detail
         else:
-            content = Res(
-                code=exc.status_code, message=str(exc.detail)
-            ).model_dump()
+            content = Res(code=exc.status_code, message=str(exc.detail)).model_dump()
         return JSONResponse(status_code=exc.status_code, content=content)
 
     @app.exception_handler(RequestValidationError)

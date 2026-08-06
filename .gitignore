@@ -21,6 +21,7 @@ ENV/
 *.swo
 .trae/
 .agents/
+.ruff_cache/
 *~
 
 # OS

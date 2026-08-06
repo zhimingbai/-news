@@ -129,9 +129,7 @@ async def get_favorite_list(page_info: FavoriteReqList, user_id: int, db: AsyncS
 
     # 3. 批量查询对应的真实新闻
     news_stmt = select(News).where(News.id.in_(news_ids))
-    news_map = {
-        news.id: news for news in (await db.execute(news_stmt)).scalars().all()
-    }
+    news_map = {news.id: news for news in (await db.execute(news_stmt)).scalars().all()}
 
     # 4. 保持收藏顺序返回（已删除的新闻自动过滤掉）
     items = [news_map[news_id] for news_id in news_ids if news_id in news_map]

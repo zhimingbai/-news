@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.db_conf import get_db
-from crud.history import add_history, remove_all_history, remove_history
+from crud.history import add_history, get_history, remove_all_history, remove_history
 from schemas.common import Res
+from schemas.history import HistoryPageReq, HistoryRespList
 from utils.auth import get_current_user_id
 
 router = APIRouter(prefix="/api/history", tags=["history"])
@@ -58,3 +59,19 @@ async def delete_all_history_api(
     """删除所有历史记录"""
     total = await remove_all_history(user_id, db)
     return Res.success(message=f"成功删除 {total} 条历史记录")
+
+
+@router.post(
+    "/list",
+    response_model=Res,
+    summary="获取历史记录列表",
+    description="获取用户浏览新闻的历史记录列表",
+)
+async def get_history_list_api(
+    page_info: HistoryPageReq,
+    user_id: int = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """获取历史记录列表"""
+    history_list = await get_history(page_info, user_id, db)
+    return Res.success(data=HistoryRespList.model_validate(history_list))
