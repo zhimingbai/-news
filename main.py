@@ -7,7 +7,7 @@ from config.exception_handlers import register_exception_handlers
 from routers import register_routers
 from schemas.common import Res
 
-app = FastAPI()
+app = FastAPI(swagger_ui_parameters={"persistAuthorization": True})
 
 # 注册全局异常处理器
 register_exception_handlers(app)

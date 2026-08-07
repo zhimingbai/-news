@@ -1,9 +1,13 @@
 # 新闻相关数据库操作
 
 
-from sqlalchemy import func, select, update
+from typing import cast
+
+from fastapi.encoders import jsonable_encoder
+from sqlalchemy import CursorResult, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from cache.news_cache import get_category_cache, set_category_cache
 from models.news import Category, News
 
 
@@ -22,9 +26,17 @@ async def get_categories(
     Returns:
         list[Category]: 新闻分类对象列表。
     """
+
+    cache_categories = await get_category_cache()
+    if cache_categories:
+        return cache_categories
+
     stmt = select(Category).offset(skip).limit(limit)
-    result = await db.execute(stmt)
-    return result.scalars().all()
+    categories = (await db.execute(stmt)).scalars().all()
+
+    if categories:
+        await set_category_cache(jsonable_encoder(categories))
+    return categories
 
 
 async def get_news_list(
@@ -97,7 +109,7 @@ async def increase_view_count(new_id: int, db: AsyncSession):
         bool: 是否成功增加点击量。
     """
     stmt = update(News).where(News.id == new_id).values(views=News.views + 1)
-    result = await db.execute(stmt)
+    result = cast(CursorResult, await db.execute(stmt))
     await db.commit()
     return result.rowcount > 0
 
