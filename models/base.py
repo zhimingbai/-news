@@ -1,4 +1,5 @@
-# models/base.py
+# ORM 基类与公共字段
+# 所有数据模型继承 Base；TimestampMixin 提供公共时间字段
 from datetime import datetime
 
 from sqlalchemy import DateTime
