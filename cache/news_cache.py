@@ -6,6 +6,9 @@ from typing import Any
 from config.cache_conf import get_json_cache, set_cache
 
 CATEGORY_CACHE_KEY = "news:categories"  # 缓存新闻分类的键
+NEWS_LIST_PREFIX = (
+    "news_list:"  # 缓存新闻列表的键前缀，格式为 news_list:分类id:页码:每页数量
+)
 
 
 async def get_category_cache():
@@ -29,3 +32,32 @@ async def set_category_cache(data: list[dict[str, Any]], expire: int = 7200):
         bool: 是否设置成功；写入失败返回 False。
     """
     return await set_cache(CATEGORY_CACHE_KEY, data, expire)
+
+
+# 写入缓存-新闻列表 key = news_list:分类id:页码:每页数量  + 列表数据 + 过期时间
+async def set_news_list_cache(
+    category_id: int | None,
+    page: int,
+    page_size: int,
+    data: list[dict[str, Any]],
+    expire: int = 3600,
+):
+    category_part = category_id if category_id is not None else "all"
+    key = f"{NEWS_LIST_PREFIX}{category_part}:{page}:{page_size}"
+    return await set_cache(key, data, expire)
+
+
+async def get_news_list_cache(category_id: int | None, page: int, page_size: int):
+    """获取新闻列表缓存。
+
+    Args:
+        category_id: 新闻分类ID；若为 None，则表示获取所有分类的新闻列表。
+        page: 页码。
+        page_size: 每页数量。
+
+    Returns:
+        list[dict[str, Any]] | None: 新闻列表缓存；若缓存不存在或读取失败则返回 None。
+    """
+    category_part = category_id if category_id is not None else "all"
+    key = f"{NEWS_LIST_PREFIX}{category_part}:{page}:{page_size}"
+    return await get_json_cache(key)

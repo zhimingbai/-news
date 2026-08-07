@@ -7,7 +7,12 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy import CursorResult, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from cache.news_cache import get_category_cache, set_category_cache
+from cache.news_cache import (
+    get_category_cache,
+    get_news_list_cache,
+    set_category_cache,
+    set_news_list_cache,
+)
 from models.news import Category, News
 
 
@@ -56,6 +61,10 @@ async def get_news_list(
     Returns:
         list[News]: 新闻对象列表。
     """
+    cache_data = await get_news_list_cache(category_id, page=page, page_size=page_size)
+    if cache_data:
+        return cache_data
+
     skip = (page - 1) * page_size
     stmt = (
         select(News)
@@ -64,8 +73,12 @@ async def get_news_list(
         .offset(skip)
         .limit(page_size)
     )
-    result = await db.execute(stmt)
-    return result.scalars().all()
+    data = (await db.execute(stmt)).scalars().all()
+    if data:
+        await set_news_list_cache(
+            category_id, page=page, page_size=page_size, data=jsonable_encoder(data)
+        )
+    return data
 
 
 async def get_news_count(db: AsyncSession, category_id: int):
